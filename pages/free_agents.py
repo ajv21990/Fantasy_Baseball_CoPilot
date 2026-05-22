@@ -448,26 +448,50 @@ def render(league, my_team_name: str = ""):
         st.warning("Free agent data is only available for 2019 and later seasons.")
         return
 
-    # ── Section 1: Your Weak Spots ────────────────────────────────────────────
-    st.markdown(_section_header_html("Your Weak Spots", top_margin=False), unsafe_allow_html=True)
+    # ── Team selector ─────────────────────────────────────────────────────────
+    try:
+        sorted_teams = league.standings()
+    except Exception:
+        sorted_teams = list(league.teams)
+
+    you_marker = " ★" if my_team_name else ""
+    labels = []
+    label_to_name = {}
+    default_idx = 0
+    for i, t in enumerate(sorted_teams):
+        is_mine = my_team_name and my_team_name.lower() in t.team_name.lower()
+        label = f"{i + 1}. {t.team_name}{you_marker if is_mine else ''}"
+        labels.append(label)
+        label_to_name[label] = t.team_name
+        if is_mine:
+            default_idx = i
+
+    selected_label = st.selectbox(
+        "Analyze team", labels, index=default_idx, label_visibility="collapsed"
+    )
+    selected_team_name = label_to_name[selected_label]
+
+    # ── Section 1: Weak Spots ─────────────────────────────────────────────────
+    short_name = selected_team_name.split()[0] if selected_team_name else "Team"
+    st.markdown(
+        _section_header_html(f"{short_name}'s Weak Spots", top_margin=True),
+        unsafe_allow_html=True,
+    )
 
     weaknesses = []
-    if not my_team_name:
-        st.info("Set MY_TEAM_NAME in your .env to enable personalized analysis.")
-    else:
-        current_period = getattr(league, "currentMatchupPeriod", 1)
-        with st.spinner("Analyzing your team..."):
-            try:
-                cat_wins   = fetch_category_wins(league, max(current_period - 1, 1))
-                team_stats = fetch_team_season_stats(league)
-                weaknesses = _compute_weaknesses(my_team_name, cat_wins, team_stats)
-            except Exception as e:
-                st.warning(f"Could not compute weaknesses: {e}")
+    current_period = getattr(league, "currentMatchupPeriod", 1)
+    with st.spinner("Analyzing team..."):
+        try:
+            cat_wins   = fetch_category_wins(league, max(current_period - 1, 1))
+            team_stats = fetch_team_season_stats(league)
+            weaknesses = _compute_weaknesses(selected_team_name, cat_wins, team_stats)
+        except Exception as e:
+            st.warning(f"Could not compute weaknesses: {e}")
 
-        if not weaknesses:
-            st.info("No weakness data yet — check back after at least 1 completed matchup period.")
-        else:
-            _render_diagnosis_cards(weaknesses)
+    if not weaknesses:
+        st.info("No weakness data yet — check back after at least 1 completed matchup period.")
+    else:
+        _render_diagnosis_cards(weaknesses)
 
     # ── Fetch shared free agent pool ──────────────────────────────────────────
     current_week = getattr(league, "currentMatchupPeriod", getattr(league, "current_week", 1))
@@ -491,14 +515,14 @@ def render(league, my_team_name: str = ""):
             _render_player_cards_section(cat, picks)
 
     # ── Section 3: Trade Targets ──────────────────────────────────────────────
-    if weaknesses and my_team_name:
+    if weaknesses:
         st.markdown(_section_header_html("Trade Targets"), unsafe_allow_html=True)
         for w in weaknesses:
             cat = w["cat"]
-            raw_targets = _get_trade_targets(league, my_team_name, cat, n=4)
+            raw_targets = _get_trade_targets(league, selected_team_name, cat, n=4)
             pairs  = [(p, bd) for p, bd, _ in raw_targets]
-            labels = [tn for _, _, tn in raw_targets]
-            _render_player_cards_section(cat, pairs, owner_labels=labels)
+            trade_labels = [tn for _, _, tn in raw_targets]
+            _render_player_cards_section(cat, pairs, owner_labels=trade_labels)
 
     # ── Section 4: Free Agent Browser ────────────────────────────────────────
     st.markdown(_section_header_html("Free Agent Browser"), unsafe_allow_html=True)
