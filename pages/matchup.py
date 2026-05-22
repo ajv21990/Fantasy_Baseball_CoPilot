@@ -98,6 +98,8 @@ def render(league, my_team_name: str = ""):
 
     away_w = home_l
     away_l = home_w
+    # Ties are mutual — both teams tie the same categories
+    away_t = home_t
 
     # ── Score colors (higher score = green) ──────────────────────────────────
     if home_w > away_w:
@@ -129,7 +131,7 @@ def render(league, my_team_name: str = ""):
         )
 
     home_score_str = f"{home_w}-{home_l}-{home_t}" if home_t > 0 else f"{home_w}-{home_l}"
-    away_score_str = f"{away_w}-{away_l}-{home_t}" if home_t > 0 else f"{away_w}-{away_l}"
+    away_score_str = f"{away_w}-{away_l}-{away_t}" if away_t > 0 else f"{away_w}-{away_l}"
 
     scoreboard_html = (
         '<div style="background:linear-gradient(135deg,#0d1a2e 0%,#111827 50%,#1a0d1a 100%);'

@@ -311,6 +311,61 @@ header[data-testid="stHeader"] {
 """, unsafe_allow_html=True)
 
 
+def _is_auth_error(e: Exception) -> bool:
+    """Return True when the exception looks like an ESPN auth/cookie failure."""
+    msg = str(e).lower()
+    return any(token in msg for token in (
+        "401", "403", "private", "unauthorized", "forbidden",
+        "access denied", "invalid", "cookie",
+    ))
+
+
+def show_cookie_expired_page():
+    """Render a friendly cookie-expired error page and stop execution."""
+    st.markdown("""
+<div style="
+    background:#0a0e17;
+    min-height:60vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+">
+  <div style="
+      background:linear-gradient(135deg,#111827 0%,#0d1a2e 100%);
+      border:1px solid #dc2626;
+      border-radius:14px;
+      padding:40px 48px;
+      max-width:520px;
+      text-align:center;
+  ">
+    <div style="font-size:3rem;margin-bottom:16px;">🍪</div>
+    <div style="
+        font-size:1.5rem;font-weight:800;letter-spacing:0.06em;
+        text-transform:uppercase;color:#f1f5f9;margin-bottom:12px;
+    ">Session Expired</div>
+    <div style="font-size:0.95rem;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
+      The ESPN cookies powering this app have expired. Tap below to notify the admin.
+    </div>
+    <a href="mailto:ajvillan22@yahoo.com?subject=Fantasy%20Baseball%20-%20Update%20Cookies"
+       style="
+           display:inline-block;
+           background:#dc2626;
+           color:#ffffff;
+           font-weight:700;
+           font-size:0.9rem;
+           padding:10px 24px;
+           border-radius:8px;
+           text-decoration:none;
+           letter-spacing:0.04em;
+       ">
+      Email Admin
+    </a>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+    st.stop()
+
+
 def show_setup_instructions(error_msg: str):
     st.error("Setup Required")
     st.markdown(f"**{error_msg}**")
@@ -405,6 +460,9 @@ def main():
                 swid=creds["swid"],
             )
         except Exception as e:
+            if _is_auth_error(e):
+                show_cookie_expired_page()
+                return
             st.error(f"Could not connect to ESPN for **{selected_name}**: {e}")
             st.info("This usually means your ESPN cookies have expired. Re-copy them from your browser and update `.env`.")
             return
