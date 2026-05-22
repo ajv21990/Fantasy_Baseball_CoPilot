@@ -276,46 +276,53 @@ def render(league, my_team_name: str = ""):
     era_val = utils.format_stat("ERA", quick.get("ERA")) if quick.get("ERA") is not None else "—"
 
     # ── Hero card ─────────────────────────────────────────────────────────────
-    st.markdown(f"""
-<div style="background:linear-gradient(135deg,#111827 0%,#0d1a2e 60%,#1a0d0d 100%);border:1px solid #1e2d40;border-left:4px solid #dc2626;border-radius:14px;padding:24px 28px;margin-bottom:1.25rem;">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-    {you_html}
-    <div style="font-size:1.8rem;font-weight:900;color:#f1f5f9;letter-spacing:0.03em;flex:1;line-height:1.15;">{_html.escape(team.team_name)}</div>
-    <span style="background:{rank_bg};color:{rank_c};border:1px solid {rank_bd};border-radius:20px;padding:5px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.08em;white-space:nowrap;">{rank_str}</span>
-  </div>
-  <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
-    <span style="font-size:3rem;font-weight:900;color:#22c55e;line-height:1;">{wins}</span>
-    <span style="font-size:1.1rem;color:#4b5563;font-weight:700;">W</span>
-    <span style="font-size:1.8rem;color:#374151;font-weight:900;margin:0 4px;">&ndash;</span>
-    <span style="font-size:3rem;font-weight:900;color:#ef4444;line-height:1;">{losses}</span>
-    <span style="font-size:1.1rem;color:#4b5563;font-weight:700;">L</span>
-    {ties_html}
-  </div>
-  <div style="height:1px;background:#1e2d40;margin-bottom:16px;"></div>
-  <div class="stat-card-row" style="margin-bottom:0;">
-    <div class="stat-card gold">
-      <div class="sc-label">Team HR</div>
-      <div class="sc-value">{hr_val}</div>
-      <div class="sc-sub">home runs</div>
-    </div>
-    <div class="stat-card green">
-      <div class="sc-label">Team OPS</div>
-      <div class="sc-value" style="font-size:1.3rem;">{ops_val}</div>
-      <div class="sc-sub">on-base + slugging</div>
-    </div>
-    <div class="stat-card blue">
-      <div class="sc-label">Team K</div>
-      <div class="sc-value">{k_val}</div>
-      <div class="sc-sub">strikeouts</div>
-    </div>
-    <div class="stat-card red">
-      <div class="sc-label">Team ERA</div>
-      <div class="sc-value" style="font-size:1.3rem;">{era_val}</div>
-      <div class="sc-sub">earned run avg</div>
-    </div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    # Build as a string (no triple-quote f-string) so empty you_html/ties_html
+    # never inject a blank line that CommonMark would use to end the HTML block.
+    _hero = (
+        '<div style="background:linear-gradient(135deg,#111827 0%,#0d1a2e 60%,#1a0d0d 100%);'
+        'border:1px solid #1e2d40;border-left:4px solid #dc2626;border-radius:14px;'
+        'padding:24px 28px;margin-bottom:1.25rem;">'
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">'
+        + you_html
+        + f'<div style="font-size:1.8rem;font-weight:900;color:#f1f5f9;letter-spacing:0.03em;flex:1;line-height:1.15;">{_html.escape(team.team_name)}</div>'
+        f'<span style="background:{rank_bg};color:{rank_c};border:1px solid {rank_bd};'
+        f'border-radius:20px;padding:5px 16px;font-size:0.82rem;font-weight:700;'
+        f'letter-spacing:0.08em;white-space:nowrap;">{rank_str}</span>'
+        '</div>'
+        '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:18px;flex-wrap:wrap;">'
+        f'<span style="font-size:3rem;font-weight:900;color:#22c55e;line-height:1;">{wins}</span>'
+        '<span style="font-size:1.1rem;color:#4b5563;font-weight:700;">W</span>'
+        '<span style="font-size:1.8rem;color:#374151;font-weight:900;margin:0 4px;">&ndash;</span>'
+        f'<span style="font-size:3rem;font-weight:900;color:#ef4444;line-height:1;">{losses}</span>'
+        '<span style="font-size:1.1rem;color:#4b5563;font-weight:700;">L</span>'
+        + ties_html
+        + '</div>'
+        '<div style="height:1px;background:#1e2d40;margin-bottom:16px;"></div>'
+        '<div class="stat-card-row" style="margin-bottom:0;">'
+        '<div class="stat-card gold">'
+        '<div class="sc-label">Team HR</div>'
+        f'<div class="sc-value">{hr_val}</div>'
+        '<div class="sc-sub">home runs</div>'
+        '</div>'
+        '<div class="stat-card green">'
+        '<div class="sc-label">Team OPS</div>'
+        f'<div class="sc-value" style="font-size:1.3rem;">{ops_val}</div>'
+        '<div class="sc-sub">on-base + slugging</div>'
+        '</div>'
+        '<div class="stat-card blue">'
+        '<div class="sc-label">Team K</div>'
+        f'<div class="sc-value">{k_val}</div>'
+        '<div class="sc-sub">strikeouts</div>'
+        '</div>'
+        '<div class="stat-card red">'
+        '<div class="sc-label">Team ERA</div>'
+        f'<div class="sc-value" style="font-size:1.3rem;">{era_val}</div>'
+        '<div class="sc-sub">earned run avg</div>'
+        '</div>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(_hero, unsafe_allow_html=True)
 
     # ── Roster ────────────────────────────────────────────────────────────────
     roster   = getattr(team, "roster", []) or []
