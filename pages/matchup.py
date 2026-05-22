@@ -141,10 +141,10 @@ def render(league, my_team_name: str = ""):
         '</div>'
         f'<div style="text-align:center;font-size:0.68rem;color:#4b5563;margin-bottom:16px;">{date_range}</div>'
 
-        '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">'
+        '<div class="matchup-scoreboard-row">'
 
         # Home side
-        '<div style="flex:1;text-align:center;">'
+        '<div class="matchup-team-block">'
         '<div style="font-size:0.68rem;color:#4b5563;text-transform:uppercase;'
         'letter-spacing:0.1em;margin-bottom:6px;">Home</div>'
         f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;">{home_name}</div>'
@@ -154,7 +154,7 @@ def render(league, my_team_name: str = ""):
         '</div>'
 
         # Middle
-        '<div style="text-align:center;min-width:80px;">'
+        '<div class="matchup-vs-block">'
         '<div style="font-size:1.6rem;color:#374151;font-weight:900;line-height:1;">&#9876;&#65039;</div>'
         '<div style="font-size:0.65rem;color:#374151;letter-spacing:0.2em;'
         'text-transform:uppercase;margin-top:4px;">vs</div>'
@@ -162,7 +162,7 @@ def render(league, my_team_name: str = ""):
         '</div>'
 
         # Away side
-        '<div style="flex:1;text-align:center;">'
+        '<div class="matchup-team-block">'
         '<div style="font-size:0.68rem;color:#4b5563;text-transform:uppercase;'
         'letter-spacing:0.1em;margin-bottom:6px;">Away</div>'
         f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;">{away_name}</div>'

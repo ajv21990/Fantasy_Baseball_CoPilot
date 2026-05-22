@@ -112,8 +112,8 @@ def render(league, my_team_name: str = ""):
                 else:
                     cells += f'<td style="padding:10px 14px;color:#94a3b8;">{val}</td>'
             body += f'<tr style="{row_style}">{cells}</tr>'
-        return (f'<div style="border-radius:10px;overflow:hidden;border:1px solid #1e2d40;margin-bottom:1.5rem;">'
-                f'<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">'
+        return (f'<div class="resp-table" style="border-radius:10px;border:1px solid #1e2d40;margin-bottom:1.5rem;">'
+                f'<table style="width:100%;border-collapse:collapse;font-size:0.9rem;min-width:420px;">'
                 f'<thead><tr>{hdr}</tr></thead><tbody>{body}</tbody></table></div>')
 
     st.markdown(_standings_html(df, my_team_name), unsafe_allow_html=True)

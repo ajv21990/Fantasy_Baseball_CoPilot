@@ -245,6 +245,68 @@ header[data-testid="stHeader"] {
 ::-webkit-scrollbar-track { background: #0a0e17; }
 ::-webkit-scrollbar-thumb { background: #1e2d40; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #2d4060; }
+
+/* ── Mobile: responsive helper class for scrollable table wrappers ── */
+.resp-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── Mobile: matchup scoreboard stacks vertically on narrow screens ── */
+.matchup-scoreboard-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.matchup-team-block { flex: 1; text-align: center; min-width: 130px; }
+.matchup-vs-block   { text-align: center; min-width: 80px; }
+
+/* ── Mobile breakpoints ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Tighten main content padding */
+    section[data-testid="stMain"] .block-container,
+    .main .block-container {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    /* Top banner */
+    .top-banner {
+        padding: 8px 14px;
+        margin: -1rem -0.75rem 1rem -0.75rem;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .top-banner .banner-title { font-size: 1rem; }
+    .top-banner .banner-sub   { display: none; }
+
+    /* Page header */
+    .page-header { margin-bottom: 1rem; }
+    .page-header .ph-icon     { font-size: 1.25rem; }
+    .page-header .ph-title    { font-size: 1.25rem; }
+    .page-header .ph-subtitle { display: none; }
+
+    /* Stat cards — 2-column grid */
+    .stat-card-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 1rem;
+    }
+    .stat-card { min-width: 0; padding: 12px 14px; }
+    .stat-card .sc-value { font-size: 1.3rem; }
+
+    /* Matchup scoreboard stacks cleanly */
+    .matchup-team-block { flex-basis: 40%; }
+}
+
+@media (max-width: 480px) {
+    /* Single-column stat cards on very small phones */
+    .stat-card-row { grid-template-columns: 1fr 1fr; }
+
+    /* Matchup: full-width stacked columns */
+    .matchup-team-block { flex-basis: 100%; }
+    .matchup-vs-block   { flex-basis: 100%; order: -1; padding: 4px 0; }
+}
 </style>
 """, unsafe_allow_html=True)
 
