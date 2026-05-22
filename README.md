@@ -117,13 +117,33 @@ The dashboard opens at [http://localhost:8501](http://localhost:8501).
 
 ## Sharing with league-mates
 
-Each person needs their own ESPN cookies (they're account-specific), so the easiest path for sharing is:
+This repo has two branches:
+
+| Branch | Purpose |
+|---|---|
+| `main` | Personal use — `MY_TEAM_NAME` enables team-specific highlights and defaults |
+| `cloud` | Shared deployment — no personal team, all views are universal with team selectors |
+
+### Deploying to Streamlit Community Cloud (cloud branch)
+
+1. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+2. Repository: `ajv21990/Fantasy_Baseball_CoPilot` · Branch: `cloud` · File: `app.py`
+3. Under **Advanced settings → Secrets**, paste:
+
+```toml
+ESPN_S2 = "AEBxxxxxx...your_full_value..."
+SWID = "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+```
+
+4. Deploy and share the URL — no accounts or installs needed for viewers
+
+### Running locally (main branch)
+
+Each person needs their own ESPN cookies (they're account-specific):
 
 1. Everyone clones this repo
 2. Each person creates their own `.env` with their credentials and team name
 3. Each person runs `streamlit run app.py` locally
-
-For a hosted version (one URL for the whole league), see [Streamlit Community Cloud](https://streamlit.io/cloud) — free tier, connects directly to this GitHub repo. Credentials are stored as Streamlit Secrets instead of a `.env` file.
 
 ---
 

@@ -24,4 +24,4 @@ def get_credentials() -> dict:
             "4. Copy .env.example → .env and fill them in"
         )
 
-    return {"espn_s2": espn_s2, "swid": swid, "my_team_name": my_team_name}
+    return {"espn_s2": espn_s2, "swid": swid, "my_team_name": ""}
