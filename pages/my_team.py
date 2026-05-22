@@ -277,25 +277,12 @@ def render(league, my_team_name: str = ""):
 
     # ── Hero card ─────────────────────────────────────────────────────────────
     st.markdown(f"""
-<div style="background:linear-gradient(135deg,#111827 0%,#0d1a2e 60%,#1a0d0d 100%);
-            border:1px solid #1e2d40;border-left:4px solid #dc2626;
-            border-radius:14px;padding:24px 28px;margin-bottom:1.25rem;">
-
-  <!-- Row 1: team name + standing badge -->
+<div style="background:linear-gradient(135deg,#111827 0%,#0d1a2e 60%,#1a0d0d 100%);border:1px solid #1e2d40;border-left:4px solid #dc2626;border-radius:14px;padding:24px 28px;margin-bottom:1.25rem;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
     {you_html}
-    <div style="font-size:1.8rem;font-weight:900;color:#f1f5f9;
-                letter-spacing:0.03em;flex:1;line-height:1.15;">
-      {_html.escape(team.team_name)}
-    </div>
-    <span style="background:{rank_bg};color:{rank_c};border:1px solid {rank_bd};
-                 border-radius:20px;padding:5px 16px;font-size:0.82rem;
-                 font-weight:700;letter-spacing:0.08em;white-space:nowrap;">
-      {rank_str}
-    </span>
+    <div style="font-size:1.8rem;font-weight:900;color:#f1f5f9;letter-spacing:0.03em;flex:1;line-height:1.15;">{_html.escape(team.team_name)}</div>
+    <span style="background:{rank_bg};color:{rank_c};border:1px solid {rank_bd};border-radius:20px;padding:5px 16px;font-size:0.82rem;font-weight:700;letter-spacing:0.08em;white-space:nowrap;">{rank_str}</span>
   </div>
-
-  <!-- Row 2: W-L-T record -->
   <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
     <span style="font-size:3rem;font-weight:900;color:#22c55e;line-height:1;">{wins}</span>
     <span style="font-size:1.1rem;color:#4b5563;font-weight:700;">W</span>
@@ -304,11 +291,7 @@ def render(league, my_team_name: str = ""):
     <span style="font-size:1.1rem;color:#4b5563;font-weight:700;">L</span>
     {ties_html}
   </div>
-
-  <!-- Divider -->
   <div style="height:1px;background:#1e2d40;margin-bottom:16px;"></div>
-
-  <!-- Row 3: quick stat cards (reuses global CSS) -->
   <div class="stat-card-row" style="margin-bottom:0;">
     <div class="stat-card gold">
       <div class="sc-label">Team HR</div>
@@ -340,19 +323,12 @@ def render(league, my_team_name: str = ""):
     pitchers = sorted([p for p in roster if utils.is_pitcher(p)],     key=_pit_sort_key)
 
     total = len(roster)
-    st.markdown(f"""
-<div style="font-size:0.85rem;font-weight:700;color:#f1f5f9;letter-spacing:0.08em;
-            text-transform:uppercase;margin:1.5rem 0 0.75rem 0;
-            padding-bottom:0.5rem;border-bottom:1px solid #1e2d40;">
-  Roster
-  <span style="font-size:0.72rem;color:#64748b;font-weight:400;text-transform:none;margin-left:8px;">
-    {total} players &nbsp;&middot;&nbsp;
-    <span style="color:#22c55e;">&#9632; active</span> &nbsp;
-    <span style="color:#4b5563;">&#9632; bench</span> &nbsp;
-    <span style="color:#ef4444;">&#9632; IL</span>
-  </span>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="font-size:0.85rem;font-weight:700;color:#f1f5f9;letter-spacing:0.08em;text-transform:uppercase;margin:1.5rem 0 0.75rem 0;padding-bottom:0.5rem;border-bottom:1px solid #1e2d40;">'
+        f'Roster <span style="font-size:0.72rem;color:#64748b;font-weight:400;text-transform:none;margin-left:8px;">{total} players &nbsp;&middot;&nbsp; <span style="color:#22c55e;">&#9632; active</span> &nbsp; <span style="color:#4b5563;">&#9632; bench</span> &nbsp; <span style="color:#ef4444;">&#9632; IL</span></span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     if not roster:
         st.info("No roster data available.")
