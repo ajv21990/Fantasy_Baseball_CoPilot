@@ -110,6 +110,8 @@ def render(league, my_team_name: str = ""):
 
     opp_w = my_l
     opp_l = my_w
+    # Ties are mutual — both teams tie the same categories
+    opp_t = my_t
 
     # ── VS scoreboard header ─────────────────────────────────────────────────
     # Determine who's winning visually
@@ -127,7 +129,7 @@ def render(league, my_team_name: str = ""):
         status_badge = '<span style="background:rgba(234,179,8,0.2);color:#eab308;border:1px solid rgba(234,179,8,0.4);border-radius:20px;padding:4px 14px;font-size:0.8rem;font-weight:700;letter-spacing:0.08em;">TIED</span>'
 
     my_score_str  = f"{my_w}-{my_l}-{my_t}" if my_t > 0 else f"{my_w}-{my_l}"
-    opp_score_str = f"{opp_w}-{opp_l}-{my_t}" if my_t > 0 else f"{opp_w}-{opp_l}"
+    opp_score_str = f"{opp_w}-{opp_l}-{opp_t}" if opp_t > 0 else f"{opp_w}-{opp_l}"
 
     scoreboard_html = (
         '<div style="background:linear-gradient(135deg,#0d1a2e 0%,#111827 50%,#1a0d1a 100%);'

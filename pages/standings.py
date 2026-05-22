@@ -1,3 +1,4 @@
+import html as _html
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -67,7 +68,7 @@ def render(league, my_team_name: str = ""):
   </div>
   <div class="stat-card gold">
     <div class="sc-label">Current Leader</div>
-    <div class="sc-value" style="font-size:1.15rem;">{leader.team_name}</div>
+    <div class="sc-value" style="font-size:1.15rem;">{_html.escape(leader.team_name)}</div>
     <div class="sc-sub">first place</div>
   </div>
   <div class="stat-card green">
@@ -104,7 +105,7 @@ def render(league, my_team_name: str = ""):
                 elif col == "Team":
                     nc = "#fbbf24" if is_mine else "#f1f5f9"
                     fw = "700" if is_mine else "400"
-                    cells += f'<td style="padding:10px 14px;color:{nc};font-weight:{fw};">{val}{_you_badge(is_mine)}</td>'
+                    cells += f'<td style="padding:10px 14px;color:{nc};font-weight:{fw};">{_html.escape(str(val))}{_you_badge(is_mine)}</td>'
                 elif col == "W":
                     cells += f'<td style="padding:10px 14px;color:#22c55e;font-weight:700;">{val}</td>'
                 elif col == "L":
@@ -168,7 +169,7 @@ def render(league, my_team_name: str = ""):
             is_mine = my_team_name and my_team_name.lower() in team_name.lower()
             cells = (f'<td style="padding:8px 12px;color:{"#fbbf24" if is_mine else "#f1f5f9"};'
                      f'font-weight:{"700" if is_mine else "400"};white-space:nowrap;">'
-                     f'{team_name}{_you_badge(is_mine)}</td>')
+                     f'{_html.escape(team_name)}{_you_badge(is_mine)}</td>')
             data = cat_totals.get(team_name, {})
             for cat in batting_cats + pitching_cats:
                 wlt = data.get(cat, {"W": 0, "L": 0, "T": 0})
