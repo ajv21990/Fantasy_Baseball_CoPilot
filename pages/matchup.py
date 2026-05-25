@@ -14,6 +14,28 @@ def _ordinal(n) -> str:
     return f"{n}{('th','st','nd','rd','th')[min(n % 10, 4)]}"
 
 
+def _cat_result(cat: str, my_data: dict, opp_data: dict) -> str:
+    """Return WIN/LOSS/TIE for a category.
+
+    Prefers the ESPN-provided result field; falls back to comparing raw values
+    mid-week when ESPN hasn't populated result yet.
+    """
+    r = my_data.get("result", "") if isinstance(my_data, dict) else ""
+    if r in ("WIN", "LOSS", "TIE"):
+        return r
+    my_val  = my_data.get("value")  if isinstance(my_data, dict) else None
+    opp_val = opp_data.get("value") if isinstance(opp_data, dict) else None
+    if my_val is None or opp_val is None:
+        return ""
+    try:
+        mv, ov = float(my_val), float(opp_val)
+        if cat in utils.LOWER_IS_BETTER:
+            return "WIN" if mv < ov else ("LOSS" if mv > ov else "TIE")
+        return "WIN" if mv > ov else ("LOSS" if mv < ov else "TIE")
+    except (ValueError, TypeError):
+        return ""
+
+
 def render(league, my_team_name: str = ""):
     st.markdown("""
 <div class="page-header">
@@ -88,7 +110,7 @@ def render(league, my_team_name: str = ""):
     for cat, data in home_stats.items():
         if cat not in utils.LEAGUE_CATS:
             continue
-        r = data.get("result", "") if isinstance(data, dict) else ""
+        r = _cat_result(cat, data, away_stats.get(cat, {}))
         if r == "WIN":
             home_w += 1
         elif r == "LOSS":
@@ -106,19 +128,19 @@ def render(league, my_team_name: str = ""):
         home_score_color = "#22c55e"
         away_score_color = "#ef4444"
         status_badge = (
-            f'<span style="background:rgba(34,197,94,0.2);color:#22c55e;'
-            f'border:1px solid rgba(34,197,94,0.4);border-radius:20px;'
-            f'padding:4px 14px;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;">'
-            f'{home_name[:12]} LEADS</span>'
+            '<span style="background:rgba(34,197,94,0.2);color:#22c55e;'
+            'border:1px solid rgba(34,197,94,0.4);border-radius:20px;'
+            'padding:4px 14px;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;">'
+            'HOME LEADS</span>'
         )
     elif away_w > home_w:
         home_score_color = "#ef4444"
         away_score_color = "#22c55e"
         status_badge = (
-            f'<span style="background:rgba(34,197,94,0.2);color:#22c55e;'
-            f'border:1px solid rgba(34,197,94,0.4);border-radius:20px;'
-            f'padding:4px 14px;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;">'
-            f'{away_name[:12]} LEADS</span>'
+            '<span style="background:rgba(34,197,94,0.2);color:#22c55e;'
+            'border:1px solid rgba(34,197,94,0.4);border-radius:20px;'
+            'padding:4px 14px;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;">'
+            'AWAY LEADS</span>'
         )
     else:
         home_score_color = "#eab308"
@@ -149,7 +171,7 @@ def render(league, my_team_name: str = ""):
         '<div class="matchup-team-block">'
         '<div style="font-size:0.68rem;color:#4b5563;text-transform:uppercase;'
         'letter-spacing:0.1em;margin-bottom:6px;">Home</div>'
-        f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;">{home_name}</div>'
+        f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;word-break:break-word;overflow-wrap:anywhere;">{home_name}</div>'
         f'<div style="font-size:0.72rem;color:#4b5563;margin-bottom:10px;">{home_season_w}–{home_season_l}</div>'
         f'<div style="font-size:3.5rem;font-weight:900;color:{home_score_color};line-height:1;">{home_score_str}</div>'
         f'<div style="font-size:0.75rem;color:#64748b;margin-top:6px;letter-spacing:0.05em;">{home_rank_str}</div>'
@@ -167,7 +189,7 @@ def render(league, my_team_name: str = ""):
         '<div class="matchup-team-block">'
         '<div style="font-size:0.68rem;color:#4b5563;text-transform:uppercase;'
         'letter-spacing:0.1em;margin-bottom:6px;">Away</div>'
-        f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;">{away_name}</div>'
+        f'<div style="font-size:1.1rem;font-weight:700;color:#f1f5f9;margin-bottom:4px;word-break:break-word;overflow-wrap:anywhere;">{away_name}</div>'
         f'<div style="font-size:0.72rem;color:#4b5563;margin-bottom:10px;">{away_season_w}–{away_season_l}</div>'
         f'<div style="font-size:3.5rem;font-weight:900;color:{away_score_color};line-height:1;">{away_score_str}</div>'
         f'<div style="font-size:0.75rem;color:#64748b;margin-top:6px;letter-spacing:0.05em;">{away_rank_str}</div>'
@@ -191,7 +213,7 @@ def render(league, my_team_name: str = ""):
     for cat in all_cats:
         home_data = home_stats.get(cat, {}) if isinstance(home_stats.get(cat), dict) else {}
         away_data = away_stats.get(cat, {}) if isinstance(away_stats.get(cat), dict) else {}
-        result = home_data.get("result", "")
+        result = _cat_result(cat, home_data, away_data)
         rows.append({
             "Category":   cat,
             "Home":       utils.format_stat(cat, home_data.get("value")),
