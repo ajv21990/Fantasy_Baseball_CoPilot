@@ -117,22 +117,20 @@ def render(league, my_team_name: str = ""):
 
     current_period = getattr(league, "currentMatchupPeriod", "?")
 
-    # ── Tally W-L-T (only for this league's categories) ──────────────────────
-    my_w = my_l = my_t = 0
-    for cat, data in my_stats.items():
-        if cat not in utils.LEAGUE_CATS:
-            continue
-        r = _cat_result(cat, data, opp_stats.get(cat, {}))
-        if r == "WIN":
-            my_w += 1
-        elif r == "LOSS":
-            my_l += 1
-        elif r == "TIE":
-            my_t += 1
+    # ── Tally W-L-T directly from ESPN's cumulativeScore ────────────────────
+    # home_wins/losses/ties are set by H2HCategoryBoxScore from cumulativeScore
+    # and update live during the week — no need to re-derive from per-cat results.
+    if i_am_home:
+        my_w = getattr(my_box, "home_wins",   0) or 0
+        my_l = getattr(my_box, "home_losses", 0) or 0
+        my_t = getattr(my_box, "home_ties",   0) or 0
+    else:
+        my_w = getattr(my_box, "away_wins",   0) or 0
+        my_l = getattr(my_box, "away_losses", 0) or 0
+        my_t = getattr(my_box, "away_ties",   0) or 0
 
     opp_w = my_l
     opp_l = my_w
-    # Ties are mutual — both teams tie the same categories
     opp_t = my_t
 
     # ── VS scoreboard header ─────────────────────────────────────────────────
