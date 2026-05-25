@@ -105,13 +105,25 @@ def render(league, my_team_name: str = ""):
 
     current_period = getattr(league, "currentMatchupPeriod", "?")
 
-    # ── Tally W-L-T directly from ESPN's cumulativeScore ────────────────────
-    home_w = getattr(box, "home_wins",   0) or 0
-    home_l = getattr(box, "home_losses", 0) or 0
-    home_t = getattr(box, "home_ties",   0) or 0
-    away_w = getattr(box, "away_wins",   0) or 0
-    away_l = getattr(box, "away_losses", 0) or 0
-    away_t = getattr(box, "away_ties",   0) or 0
+    # ── Tally W-L-T from per-category stat comparison ────────────────────────
+    # ESPN's cumulativeScore.wins is 0 mid-week (only finalized at week end).
+    # Compute live from per-category raw value comparisons instead.
+    home_w = home_l = home_t = 0
+    for _cat in (set(home_stats.keys()) | set(away_stats.keys())):
+        if _cat not in utils.LEAGUE_CATS:
+            continue
+        _hd = home_stats.get(_cat, {}) if isinstance(home_stats.get(_cat), dict) else {}
+        _ad = away_stats.get(_cat, {}) if isinstance(away_stats.get(_cat), dict) else {}
+        _r = _cat_result(_cat, _hd, _ad)
+        if _r == "WIN":
+            home_w += 1
+        elif _r == "LOSS":
+            home_l += 1
+        elif _r == "TIE":
+            home_t += 1
+    away_w = home_l
+    away_l = home_w
+    away_t = home_t
 
     # ── Score colors (higher score = green) ──────────────────────────────────
     if home_w > away_w:
