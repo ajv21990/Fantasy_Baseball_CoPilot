@@ -478,6 +478,11 @@ def main():
         ["Standings", "Teams", "Current Matchup", "Free Agents", "Transactions"],
     )
 
+    if st.sidebar.button("🔄 Refresh Data", use_container_width=True):
+        st.cache_resource.clear()
+        st.cache_data.clear()
+        st.rerun()
+
     st.sidebar.divider()
 
     week_num = getattr(league, "currentMatchupPeriod", "?")

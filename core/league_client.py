@@ -11,7 +11,7 @@ def load_leagues() -> list[dict]:
         return json.load(f)
 
 
-@st.cache_resource(show_spinner=False)
+@st.cache_resource(ttl=3600, show_spinner=False)
 def get_league(league_id: int, year: int, espn_s2: str, swid: str) -> League:
     from espn_api.baseball.box_score import BoxScore, H2HCategoryBoxScore
     league = League(league_id=league_id, year=year, espn_s2=espn_s2, swid=swid)
