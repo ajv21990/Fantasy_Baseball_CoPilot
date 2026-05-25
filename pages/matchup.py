@@ -117,18 +117,22 @@ def render(league, my_team_name: str = ""):
 
     current_period = getattr(league, "currentMatchupPeriod", "?")
 
-    # ── Tally W-L-T directly from ESPN's cumulativeScore ────────────────────
-    # home_wins/losses/ties are set by H2HCategoryBoxScore from cumulativeScore
-    # and update live during the week — no need to re-derive from per-cat results.
-    if i_am_home:
-        my_w = getattr(my_box, "home_wins",   0) or 0
-        my_l = getattr(my_box, "home_losses", 0) or 0
-        my_t = getattr(my_box, "home_ties",   0) or 0
-    else:
-        my_w = getattr(my_box, "away_wins",   0) or 0
-        my_l = getattr(my_box, "away_losses", 0) or 0
-        my_t = getattr(my_box, "away_ties",   0) or 0
-
+    # ── Tally W-L-T from per-category stat comparison ────────────────────────
+    # ESPN's cumulativeScore.wins is 0 mid-week (only finalized at week end).
+    # Compute live from per-category raw value comparisons instead.
+    my_w = my_l = my_t = 0
+    for _cat in (set(my_stats.keys()) | set(opp_stats.keys())):
+        if _cat not in utils.LEAGUE_CATS:
+            continue
+        _md = my_stats.get(_cat, {}) if isinstance(my_stats.get(_cat), dict) else {}
+        _od = opp_stats.get(_cat, {}) if isinstance(opp_stats.get(_cat), dict) else {}
+        _r = _cat_result(_cat, _md, _od)
+        if _r == "WIN":
+            my_w += 1
+        elif _r == "LOSS":
+            my_l += 1
+        elif _r == "TIE":
+            my_t += 1
     opp_w = my_l
     opp_l = my_w
     opp_t = my_t
