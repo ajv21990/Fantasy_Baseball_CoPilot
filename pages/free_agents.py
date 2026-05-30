@@ -286,7 +286,7 @@ def _player_card_html(p, bd: dict, target_cat: str, owner_label: str = "") -> st
     for cat in ordered_cats:
         val = bd.get(cat)
         val_str = utils.format_stat(cat, val)
-        color_style = utils.stat_color_style(cat, val) if val is not None else "color:#4b5563"
+        color_style = utils.stat_color_style(cat, val, bd) if val is not None else "color:#4b5563"
         label_color = target_accent if cat == target_cat else "#64748b"
         fw = "800" if cat == target_cat else "600"
         bottom_border = "border-bottom:1px solid #1e2d40;" if cat == target_cat else ""
@@ -405,7 +405,7 @@ def _fa_table_html(players: list, stat_cols: list, sort_by: str,
 
         stat_cells = "".join(
             f'<td style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.85rem;'
-            f'{utils.stat_color_style(s, bd.get(s))}">'
+            f'{utils.stat_color_style(s, bd.get(s), bd)}">'
             f'{utils.format_stat(s, bd.get(s))}</td>'
             for s in stat_cols
         )

@@ -28,6 +28,16 @@ STAT_THRESHOLDS = {
 LOWER_IS_BETTER = {"ERA", "WHIP"}
 COUNTING_STATS  = {"R", "HR", "RBI", "SB", "K", "W", "SV"}
 
+# Full-season usage baselines for per-player participation scaling.
+# Used to compute how much of a "full season" each individual player has accumulated,
+# so injured players returning mid-season are graded on pace rather than raw totals.
+FULL_SEASON_AB = 550  # typical full-season at-bats for a position player
+_PITCHER_STAT_FULL_OUTS = {  # expected full-season outs per pitching counting stat
+    "K":  540,   # 180 IP, starter-weighted
+    "W":  540,   # 180 IP, starter-weighted
+    "SV": 180,   # 60 IP, closer-weighted
+}
+
 # Season progress fraction (0.0–1.0).  Set once per page load via
 # set_season_fraction() after the league object is available.
 _season_fraction: float = 1.0
@@ -52,8 +62,33 @@ def set_season_fraction(fraction: float) -> None:
     _season_fraction = max(0.05, min(1.0, float(fraction)))
 
 
-def stat_color_style(stat: str, value) -> str:
-    """Return a CSS color+weight string for a stat value. Empty string if unknown stat."""
+def compute_player_fraction(bd: dict, stat: str) -> float:
+    """Return effective season fraction for one player based on their accumulated usage.
+
+    Injured players who missed time have fewer AB/OUTS than healthy peers. Using their
+    personal participation fraction (instead of the global season fraction) means their
+    counting-stat thresholds are scaled to their actual playing time, so they're graded
+    on pace rather than penalized for missed games. Capped at _season_fraction so a
+    player can't look better than the season position allows.
+    """
+    if stat not in COUNTING_STATS:
+        return _season_fraction
+    if stat in _PITCHER_STAT_FULL_OUTS:
+        outs = float(bd.get("OUTS", 0) or 0)
+        frac = outs / _PITCHER_STAT_FULL_OUTS[stat]
+    else:
+        ab = float(bd.get("AB", 0) or 0)
+        frac = ab / FULL_SEASON_AB
+    return max(0.05, min(_season_fraction, frac))
+
+
+def stat_color_style(stat: str, value, bd: dict = None) -> str:
+    """Return a CSS color+weight string for a stat value. Empty string if unknown stat.
+
+    Pass bd (the player's breakdown dict) for per-player views so injured players with
+    fewer AB/OUTS are graded against appropriately scaled thresholds. Omit bd (or pass
+    None) for team-level aggregates, which use the global season fraction instead.
+    """
     if stat not in STAT_THRESHOLDS:
         return ""
     try:
@@ -65,8 +100,9 @@ def stat_color_style(stat: str, value) -> str:
 
     lo, hi = STAT_THRESHOLDS[stat]
     if stat in COUNTING_STATS:
-        lo = lo * _season_fraction
-        hi = hi * _season_fraction
+        fraction = compute_player_fraction(bd, stat) if bd is not None else _season_fraction
+        lo = lo * fraction
+        hi = hi * fraction
 
     if stat in LOWER_IS_BETTER:
         if v <= lo:
