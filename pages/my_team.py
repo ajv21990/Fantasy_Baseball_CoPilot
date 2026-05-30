@@ -176,7 +176,7 @@ def _roster_table_html(players: list, stat_cols: list, section_label: str,
 
         stat_cells = "".join(
             f'<td style="padding:8px 12px;text-align:right;font-weight:600;font-size:0.88rem;'
-            f'{utils.stat_color_style(s, stats.get(s))}">'
+            f'{utils.stat_color_style(s, stats.get(s), stats)}">'
             f'{utils.format_stat(s, stats.get(s))}</td>'
             for s in stat_cols
         )
