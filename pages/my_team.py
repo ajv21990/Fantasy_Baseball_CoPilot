@@ -2,6 +2,7 @@ import html as _html
 import streamlit as st
 from core.league_client import get_my_team, get_team_by_name
 from core import utils
+from core import ratings_store
 
 # ── Slot classification ───────────────────────────────────────────────────────
 _ACTIVE_SLOTS = {"C", "1B", "2B", "3B", "SS", "OF", "SP", "RP", "UTIL", "DH", "P",
@@ -206,6 +207,12 @@ def _roster_table_html(players: list, stat_cols: list, section_label: str,
 # ── Main render ───────────────────────────────────────────────────────────────
 
 def render(league, my_team_name: str = ""):
+    # Toast queued by a save on the previous run (st.rerun cancels an inline toast,
+    # so it's shown here at the top of the following run instead).
+    _toast = st.session_state.pop("pr_toast", None)
+    if _toast:
+        st.toast(_toast, icon="⚾")
+
     st.markdown("""
 <div class="page-header">
   <span class="ph-icon">👤</span>
@@ -352,3 +359,122 @@ def render(league, my_team_name: str = ""):
         is_pitcher=True,
     )
     st.markdown(bat_html + pit_html, unsafe_allow_html=True)
+
+    # ── Player Rater listing control ──────────────────────────────────────────
+    _render_player_rater_control(team)
+
+
+# ── Player Rater listing control ──────────────────────────────────────────────
+
+def _pr_subheader_html(label: str, color: str, count: int) -> str:
+    """Batting/Pitching subsection label, mirroring the roster section style."""
+    return (
+        f'<div style="display:flex;align-items:center;gap:8px;margin:0.25rem 0 0.4rem 0;">'
+        f'<span style="font-size:0.65rem;font-weight:800;letter-spacing:0.12em;'
+        f'color:{color};text-transform:uppercase;">{label}</span>'
+        f'<span style="flex:1;height:1px;background:rgba('
+        f'{",".join(str(int(color.lstrip("#")[i:i+2],16)) for i in (0,2,4))},0.25);"></span>'
+        f'<span style="font-size:0.6rem;color:#64748b;font-weight:700;">{count} listed</span>'
+        f'</div>'
+    )
+
+
+def _pr_checkbox_grid(entries: list, listed_ids: set, team_name: str, cols: int = 3) -> list:
+    """Render a multi-column grid of player checkboxes. Returns checked player ids."""
+    checked = []
+    columns = st.columns(cols)
+    for i, (pid, name, pos) in enumerate(entries):
+        with columns[i % cols]:
+            label = f"{name}  ·  {pos}" if pos else name
+            if st.checkbox(label, value=pid in listed_ids,
+                           key=f"pr_cb_{team_name}_{pid}"):
+                checked.append(pid)
+    return checked
+
+
+def _render_player_rater_control(team) -> None:
+    """Card under the roster to add/remove this team's players on the Player Rater.
+    Mirrors the roster's Batting/Pitching layout so it reads as a related control,
+    but uses an interactive checkbox grid instead of a stats table."""
+    roster = getattr(team, "roster", []) or []
+    try:
+        listed_ids = {int(l["player_id"]) for l in ratings_store.get_listings()
+                      if l["team"] == team.team_name}
+    except Exception as e:
+        st.warning(f"Player Rater storage unavailable: {e}")
+        return
+
+    # Split into batters / pitchers (same grouping as the roster table)
+    batters, pitchers, name_by_pid = [], [], {}
+    for p in roster:
+        pid = getattr(p, "playerId", None)
+        if pid is None:
+            continue
+        pid = int(pid)
+        name_by_pid[pid] = p.name
+        entry = (pid, p.name, getattr(p, "position", "") or "")
+        (pitchers if utils.is_pitcher(p) else batters).append(entry)
+
+    all_entries = batters + pitchers
+    n_listed = sum(1 for pid, _, _ in all_entries if pid in listed_ids)
+
+    # Header — gold accent to differentiate from the roster's red/section colors
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:10px;'
+        f'margin:1.75rem 0 0.5rem 0;padding-bottom:0.5rem;'
+        f'border-bottom:1px solid #1e2d40;">'
+        f'<span style="font-size:0.95rem;font-weight:800;color:#fbbf24;'
+        f'letter-spacing:0.06em;text-transform:uppercase;">⭐ Player Rater</span>'
+        f'<span style="font-size:0.72rem;color:#64748b;font-weight:600;">'
+        f'mark trade pieces for the league to rate</span>'
+        f'<span style="margin-left:auto;background:rgba(251,191,36,0.15);'
+        f'color:#fbbf24;border:1px solid rgba(251,191,36,0.35);border-radius:20px;'
+        f'padding:2px 12px;font-size:0.72rem;font-weight:700;white-space:nowrap;">'
+        f'{n_listed} listed</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    if not all_entries:
+        st.info("No ratable players on this roster.")
+        return
+
+    # Bordered card holding the interactive grid (visually echoes the roster card)
+    with st.container(border=True):
+        st.caption(f"Check players to put **{team.team_name}**'s trade pieces on the block, "
+                   "then Save. Other teams rate them on the **Player Rater** page.")
+
+        with st.form(f"pr_form_{team.team_name}"):
+            checked_pids = []
+            if batters:
+                n = sum(1 for pid, _, _ in batters if pid in listed_ids)
+                st.markdown(_pr_subheader_html("Batting", "#f97316", n),
+                            unsafe_allow_html=True)
+                checked_pids += _pr_checkbox_grid(batters, listed_ids, team.team_name)
+            if pitchers:
+                n = sum(1 for pid, _, _ in pitchers if pid in listed_ids)
+                st.markdown(_pr_subheader_html("Pitching", "#60a5fa", n),
+                            unsafe_allow_html=True)
+                checked_pids += _pr_checkbox_grid(pitchers, listed_ids, team.team_name)
+
+            saved = st.form_submit_button("⚾ Save Player Rater list",
+                                          use_container_width=True, type="primary")
+
+    if saved:
+        checked = set(checked_pids)
+        to_add = checked - listed_ids
+        to_remove = listed_ids - checked
+        if not to_add and not to_remove:
+            st.info("No changes to save.")
+            return
+        try:
+            for pid in to_add:
+                ratings_store.list_player(team.team_name, pid, name_by_pid.get(pid, "Unknown"))
+            for pid in to_remove:
+                ratings_store.unlist_player(team.team_name, pid)
+        except Exception as e:
+            st.error(f"Could not save: {e}")
+            return
+        st.session_state["pr_toast"] = (
+            f"Player Rater list saved — {len(to_add)} added, {len(to_remove)} removed.")
+        st.rerun()

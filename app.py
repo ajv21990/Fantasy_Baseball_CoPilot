@@ -12,7 +12,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(__file__))
 
 from core import auth, league_client, utils
-from pages import standings, my_team, matchup, free_agents, transactions
+from pages import standings, my_team, matchup, free_agents, transactions, player_rater
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -475,7 +475,7 @@ def main():
     # Sidebar — page navigation
     page = st.sidebar.radio(
         "Navigate",
-        ["Standings", "Teams", "Current Matchup", "Free Agents", "Transactions"],
+        ["Standings", "Teams", "Current Matchup", "Free Agents", "Player Rater", "Transactions"],
     )
 
     if st.sidebar.button("🔄 Refresh Data", use_container_width=True):
@@ -519,6 +519,8 @@ def main():
         matchup.render(league, my_team_name)
     elif page == "Free Agents":
         free_agents.render(league, my_team_name)
+    elif page == "Player Rater":
+        player_rater.render(league, my_team_name)
     elif page == "Transactions":
         transactions.render(league)
 

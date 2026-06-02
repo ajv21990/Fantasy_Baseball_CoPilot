@@ -6,3 +6,10 @@ __pycache__/
 .DS_Store
 fantasy-baseball-copilot/
 fantasy-baseball-copilot.skill
+
+# Streamlit secrets (Player Rater DB connection, etc.)
+.streamlit/secrets.toml
+
+# Player Rater local SQLite (dev fallback)
+data/
+*.db

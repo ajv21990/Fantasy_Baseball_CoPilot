@@ -2,4 +2,6 @@ espn-api>=0.7.0
 streamlit>=1.35.0
 python-dotenv>=1.0.0
 pandas>=2.0.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0  # Postgres driver for the Player Rater (Supabase) backend
 # pybaseball>=2.2.0  # optional: supplemental player stats from Baseball Reference/FanGraphs
