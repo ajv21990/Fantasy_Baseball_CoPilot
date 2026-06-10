@@ -7,6 +7,7 @@ def get_credentials() -> dict:
     espn_s2 = os.getenv("ESPN_S2")
     swid = os.getenv("SWID")
     my_team_name = os.getenv("MY_TEAM_NAME", "")
+    admin_email = os.getenv("ADMIN_EMAIL", "")
 
     missing = []
     if not espn_s2 or espn_s2 == "your_espn_s2_cookie_value_here":
@@ -24,4 +25,4 @@ def get_credentials() -> dict:
             "4. Copy .env.example → .env and fill them in"
         )
 
-    return {"espn_s2": espn_s2, "swid": swid, "my_team_name": my_team_name}
+    return {"espn_s2": espn_s2, "swid": swid, "my_team_name": my_team_name, "admin_email": admin_email}

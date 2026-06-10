@@ -8,24 +8,12 @@ _ACTIVE_SLOTS = {"C", "1B", "2B", "3B", "SS", "OF", "SP", "RP", "UTIL", "DH", "P
                  "1B/3B", "2B/SS", "IF"}
 _IL_SLOTS     = {"IL", "IL15", "IL60"}
 
-_TH = ('background:#0d1a2e;color:#7a8fa6;font-size:0.7rem;text-transform:uppercase;'
-       'letter-spacing:0.08em;padding:8px 12px;border-bottom:2px solid #1e2d40;font-weight:700;')
-
 
 # ── Small helpers ─────────────────────────────────────────────────────────────
 
 def _you_badge() -> str:
     return (' <span style="font-size:0.6rem;background:#fbbf24;color:#0a0e17;'
             'border-radius:4px;padding:1px 5px;font-weight:700;">YOU</span>')
-
-
-def _ordinal(n) -> str:
-    if n is None:
-        return "—"
-    n = int(n)
-    if 11 <= n % 100 <= 13:
-        return f"{n}th"
-    return f"{n}{('th','st','nd','rd','th')[min(n % 10, 4)]}"
 
 
 def _slot_border_color(slot: str) -> str:
@@ -45,32 +33,6 @@ def _slot_badge_html(slot: str) -> str:
     return (f'<span style="border-radius:6px;padding:2px 8px;font-size:0.68rem;'
             f'font-weight:700;letter-spacing:0.05em;{s}">{_html.escape(slot) if slot else "—"}</span>')
 
-
-def _pos_pill_html(pos: str, is_pitcher: bool) -> str:
-    if is_pitcher:
-        s = "background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);"
-    else:
-        s = "background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);"
-    return (f'<span style="border-radius:6px;padding:2px 7px;font-size:0.68rem;'
-            f'font-weight:700;{s}">{_html.escape(pos) if pos else "—"}</span>')
-
-
-def _injury_html(val: str) -> str:
-    if not val:
-        return ""
-    if val in ("IL", "IL15", "IL60", "OUT"):
-        style = ("background:rgba(239,68,68,0.25);color:#ef4444;"
-                 "border:1px solid rgba(239,68,68,0.5);")
-    elif val == "DTD":
-        style = ("background:rgba(249,115,22,0.25);color:#f97316;"
-                 "border:1px solid rgba(249,115,22,0.5);")
-    elif val == "SUSP":
-        style = ("background:rgba(168,85,247,0.25);color:#a855f7;"
-                 "border:1px solid rgba(168,85,247,0.5);")
-    else:
-        return ""
-    return (f'<span style="border-radius:12px;padding:2px 9px;font-size:0.72rem;'
-            f'font-weight:700;letter-spacing:0.05em;{style}">{val}</span>')
 
 
 _SLOT_ORDER = {"#22c55e": 0, "#4b5563": 1, "#ef4444": 2}
@@ -92,14 +54,6 @@ def _pit_sort_key(p):
     return (_SLOT_ORDER.get(_slot_border_color(slot), 1), _PIT_POS_ORDER.get(slot, 99))
 
 
-def _player_stats_row(player) -> dict:
-    raw = getattr(player, "stats", {}) or {}
-    bd  = raw.get(0, {})
-    if isinstance(bd, dict):
-        bd = bd.get("breakdown", {})
-    return bd if isinstance(bd, dict) else {}
-
-
 # ── Cached quick-stats for hero card ─────────────────────────────────────────
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -110,11 +64,8 @@ def _team_quick_stats(_league, team_name: str) -> dict:
         hr = k = 0.0
         ab_total = ops_w = er = outs = ph = pbb = 0.0
         for player in getattr(team, "roster", []):
-            raw = getattr(player, "stats", {}) or {}
-            bd  = raw.get(0, {})
-            if isinstance(bd, dict):
-                bd = bd.get("breakdown", {})
-            if not isinstance(bd, dict):
+            bd = utils.get_player_breakdown(player)
+            if not bd:
                 continue
             if utils.is_pitcher(player):
                 k    += bd.get("K",    0) or 0
@@ -152,14 +103,14 @@ def _roster_table_html(players: list, stat_cols: list, section_label: str,
            f'{section_label}</td></tr>')
 
     stat_hdrs = "".join(
-        f'<th style="{_TH}text-align:right;">{s}</th>' for s in stat_cols
+        f'<th style="{utils.TABLE_HEADER_STYLE}text-align:right;">{s}</th>' for s in stat_cols
     )
     header_row = (f'<tr>'
-                  f'<th style="{_TH}">Slot</th>'
-                  f'<th style="{_TH}">Player</th>'
-                  f'<th style="{_TH}">Pos</th>'
-                  f'<th style="{_TH}">Team</th>'
-                  f'<th style="{_TH}">Inj</th>'
+                  f'<th style="{utils.TABLE_HEADER_STYLE}">Slot</th>'
+                  f'<th style="{utils.TABLE_HEADER_STYLE}">Player</th>'
+                  f'<th style="{utils.TABLE_HEADER_STYLE}">Pos</th>'
+                  f'<th style="{utils.TABLE_HEADER_STYLE}">Team</th>'
+                  f'<th style="{utils.TABLE_HEADER_STYLE}">Inj</th>'
                   f'{stat_hdrs}</tr>')
 
     rows_html = ""
@@ -170,8 +121,8 @@ def _roster_table_html(players: list, stat_cols: list, section_label: str,
         pro_team  = _html.escape(getattr(p, "proTeam", "") or "")
         name_esc  = _html.escape(p.name)
         pct_owned = getattr(p, "percent_owned", 0) or 0
-        inj_html  = _injury_html(utils.injury_badge(p))
-        stats     = _player_stats_row(p)
+        inj_html  = utils.injury_badge_html(utils.injury_badge(p))
+        stats     = utils.get_player_breakdown(p)
         row_bg    = "background:rgba(13,26,46,0.5);" if i % 2 == 0 else "background:rgba(10,14,23,0.4);"
 
         stat_cells = "".join(
@@ -188,7 +139,7 @@ def _roster_table_html(players: list, stat_cols: list, section_label: str,
             f'  {name_esc}'
             f'  <div style="font-size:0.65rem;color:#4b5563;margin-top:1px;">{pct_owned:.1f}% owned</div>'
             f'</td>'
-            f'<td style="padding:8px 12px;">{_pos_pill_html(pos, is_pitcher)}</td>'
+            f'<td style="padding:8px 12px;">{utils.pos_pill_html(pos, is_pitcher)}</td>'
             f'<td style="padding:8px 12px;color:#64748b;font-size:0.8rem;">{pro_team}</td>'
             f'<td style="padding:8px 12px;">{inj_html}</td>'
             f'{stat_cells}'
@@ -252,7 +203,7 @@ def render(league, my_team_name: str = ""):
         rank_c, rank_bg, rank_bd = "#cd7c4f", "rgba(205,124,79,0.18)", "rgba(205,124,79,0.4)"
     else:
         rank_c, rank_bg, rank_bd = "#4b5563", "rgba(75,85,99,0.18)", "rgba(75,85,99,0.3)"
-    rank_str = f"{_ordinal(rank)} Place" if rank else "—"
+    rank_str = f"{utils.ordinal(rank)} Place" if rank else "—"
 
     wins   = team.wins
     losses = team.losses

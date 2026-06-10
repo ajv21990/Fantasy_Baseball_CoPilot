@@ -1,3 +1,4 @@
+import html as _html
 import math
 
 RATE_STATS = {"AVG", "OBP", "SLG", "OPS", "ERA", "WHIP", "BAA"}
@@ -176,3 +177,70 @@ def is_pitcher(player) -> bool:
 
 def position_options() -> list[str]:
     return VALID_POSITIONS
+
+
+# ── Shared HTML utilities (used by multiple page modules) ─────────────────────
+
+# Table header cell style — used in standings, my_team, free_agents
+TABLE_HEADER_STYLE = (
+    'background:#0d1a2e;color:#7a8fa6;font-size:0.7rem;text-transform:uppercase;'
+    'letter-spacing:0.08em;padding:8px 12px;border-bottom:2px solid #1e2d40;font-weight:700;'
+)
+
+
+def get_player_breakdown(player) -> dict:
+    """Extract the current-season stat breakdown dict from an espn-api player object."""
+    raw = getattr(player, "stats", {}) or {}
+    bd = raw.get(0, {})
+    if isinstance(bd, dict):
+        bd = bd.get("breakdown", {})
+    return bd if isinstance(bd, dict) else {}
+
+
+def ordinal(n) -> str:
+    """Return an ordinal string for an integer (1 → '1st', 11 → '11th', etc.)."""
+    if n is None:
+        return "—"
+    n = int(n)
+    if 11 <= n % 100 <= 13:
+        return f"{n}th"
+    return f"{n}{('th', 'st', 'nd', 'rd', 'th')[min(n % 10, 4)]}"
+
+
+def pos_pill_html(pos: str, is_pitcher: bool) -> str:
+    """Return an HTML <span> pill badge for a player's position."""
+    if is_pitcher:
+        s = "background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);"
+    else:
+        s = "background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);"
+    return (
+        f'<span style="border-radius:6px;padding:2px 7px;font-size:0.68rem;'
+        f'font-weight:700;{s}">{_html.escape(pos) if pos else "—"}</span>'
+    )
+
+
+def injury_badge_html(val: str) -> str:
+    """Return an HTML <span> badge for an injury status string, or '' if healthy."""
+    if not val:
+        return ""
+    if val in ("IL", "IL15", "IL60", "OUT"):
+        style = (
+            "background:rgba(239,68,68,0.25);color:#ef4444;"
+            "border:1px solid rgba(239,68,68,0.5);"
+        )
+    elif val == "DTD":
+        style = (
+            "background:rgba(249,115,22,0.25);color:#f97316;"
+            "border:1px solid rgba(249,115,22,0.5);"
+        )
+    elif val == "SUSP":
+        style = (
+            "background:rgba(168,85,247,0.25);color:#a855f7;"
+            "border:1px solid rgba(168,85,247,0.5);"
+        )
+    else:
+        return ""
+    return (
+        f'<span style="border-radius:12px;padding:2px 9px;font-size:0.72rem;'
+        f'font-weight:700;letter-spacing:0.05em;{style}">{val}</span>'
+    )

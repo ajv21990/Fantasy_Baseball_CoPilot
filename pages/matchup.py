@@ -6,14 +6,6 @@ from core.league_client import get_my_team
 from core import utils
 
 
-def _ordinal(n) -> str:
-    if n is None:
-        return "—"
-    n = int(n)
-    if 11 <= n % 100 <= 13:
-        return f"{n}th"
-    return f"{n}{('th','st','nd','rd','th')[min(n % 10, 4)]}"
-
 
 def _cat_result(cat: str, my_data: dict, opp_data: dict) -> str:
     """Return WIN/LOSS/TIE for a category.
@@ -112,8 +104,8 @@ def render(league, my_team_name: str = ""):
     except Exception:
         my_rank = opp_rank = None
 
-    my_rank_str  = f"{_ordinal(my_rank)} Place"  if my_rank  else "—"
-    opp_rank_str = f"{_ordinal(opp_rank)} Place" if opp_rank else "—"
+    my_rank_str  = f"{utils.ordinal(my_rank)} Place"  if my_rank  else "—"
+    opp_rank_str = f"{utils.ordinal(opp_rank)} Place" if opp_rank else "—"
 
     current_period = getattr(league, "currentMatchupPeriod", "?")
 

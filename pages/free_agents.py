@@ -4,36 +4,6 @@ from datetime import datetime
 from core import utils
 from core.stats import fetch_team_season_stats, fetch_category_wins
 
-_TH = ('background:#0d1a2e;color:#7a8fa6;font-size:0.7rem;text-transform:uppercase;'
-       'letter-spacing:0.08em;padding:8px 12px;border-bottom:2px solid #1e2d40;font-weight:700;')
-
-
-# ── Shared HTML micro-helpers ─────────────────────────────────────────────────
-
-def _pos_pill_cell(pos: str, is_pitcher: bool) -> str:
-    if is_pitcher:
-        s = "background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);"
-    else:
-        s = "background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);"
-    return (f'<span style="border-radius:6px;padding:2px 7px;font-size:0.68rem;'
-            f'font-weight:700;{s}">{_html.escape(pos) if pos else "—"}</span>')
-
-
-def _injury_html_cell(val: str) -> str:
-    if not val:
-        return ""
-    if val in ("IL", "IL15", "IL60", "OUT"):
-        style = "background:rgba(239,68,68,0.25);color:#ef4444;border:1px solid rgba(239,68,68,0.5);"
-    elif val == "DTD":
-        style = "background:rgba(249,115,22,0.25);color:#f97316;border:1px solid rgba(249,115,22,0.5);"
-    elif val == "SUSP":
-        style = "background:rgba(168,85,247,0.25);color:#a855f7;border:1px solid rgba(168,85,247,0.5);"
-    else:
-        return ""
-    return (f'<span style="border-radius:12px;padding:2px 9px;font-size:0.72rem;'
-            f'font-weight:700;letter-spacing:0.05em;{style}">{val}</span>')
-
-
 def _section_header_html(title: str, top_margin: bool = True) -> str:
     mt = "1.5rem" if top_margin else "0"
     return (
@@ -53,14 +23,6 @@ def _fetch_free_agents(_league, week: int, size: int, position) -> list:
     return _league.free_agents(**kwargs)
 
 
-# ── Stat extraction helper ────────────────────────────────────────────────────
-
-def _get_bd(player) -> dict:
-    raw = getattr(player, "stats", {}) or {}
-    bd = raw.get(0, {})
-    if isinstance(bd, dict):
-        bd = bd.get("breakdown", {})
-    return bd if isinstance(bd, dict) else {}
 
 
 # ── Weakness scoring ──────────────────────────────────────────────────────────
@@ -186,7 +148,7 @@ def _render_diagnosis_cards(weaknesses: list) -> None:
 
 def _qualifies(player, target_cat: str):
     """Returns (val, bd) if player qualifies for target_cat, else None."""
-    bd = _get_bd(player)
+    bd = utils.get_player_breakdown(player)
     val = bd.get(target_cat)
     if val is None:
         return None
@@ -251,8 +213,8 @@ def _player_card_html(p, bd: dict, target_cat: str, owner_label: str = "") -> st
     pct_owned = getattr(p, "percent_owned", 0) or 0
     pitcher = utils.is_pitcher(p)
 
-    pos_pill = _pos_pill_cell(pos, pitcher)
-    inj_html = _injury_html_cell(utils.injury_badge(p))
+    pos_pill = utils.pos_pill_html(pos, pitcher)
+    inj_html = utils.injury_badge_html(utils.injury_badge(p))
 
     is_bat = target_cat in utils.BATTER_STATS
     target_accent = "#f97316" if is_bat else "#60a5fa"
@@ -364,7 +326,7 @@ def _fa_table_html(players: list, stat_cols: list, sort_by: str,
         return ""
 
     def sort_key(p):
-        bd = _get_bd(p)
+        bd = utils.get_player_breakdown(p)
         if sort_by == "% Owned":
             return -(getattr(p, "percent_owned", 0) or 0)
         val = bd.get(sort_by)
@@ -383,19 +345,19 @@ def _fa_table_html(players: list, stat_cols: list, sort_by: str,
         f'letter-spacing:0.12em;color:{section_color};text-transform:uppercase;'
         f'border-top:1px solid rgba({r},{g},{b},0.2);">{section_label}</td></tr>'
     )
-    stat_hdrs = "".join(f'<th style="{_TH}text-align:right;">{s}</th>' for s in stat_cols)
+    stat_hdrs = "".join(f'<th style="{utils.TABLE_HEADER_STYLE}text-align:right;">{s}</th>' for s in stat_cols)
     header_row = (
-        f'<tr><th style="{_TH}">Pos</th>'
-        f'<th style="{_TH}">Player</th>'
-        f'<th style="{_TH}">Team</th>'
-        f'<th style="{_TH}">Inj</th>'
-        f'<th style="{_TH}text-align:right;">% Own</th>'
+        f'<tr><th style="{utils.TABLE_HEADER_STYLE}">Pos</th>'
+        f'<th style="{utils.TABLE_HEADER_STYLE}">Player</th>'
+        f'<th style="{utils.TABLE_HEADER_STYLE}">Team</th>'
+        f'<th style="{utils.TABLE_HEADER_STYLE}">Inj</th>'
+        f'<th style="{utils.TABLE_HEADER_STYLE}text-align:right;">% Own</th>'
         f'{stat_hdrs}</tr>'
     )
 
     rows_html = ""
     for i, p in enumerate(sorted_players):
-        bd = _get_bd(p)
+        bd = utils.get_player_breakdown(p)
         pos      = _html.escape(getattr(p, "position", "") or "")
         pro_team = _html.escape(getattr(p, "proTeam", "") or "")
         name_esc = _html.escape(p.name)
@@ -412,12 +374,12 @@ def _fa_table_html(players: list, stat_cols: list, sort_by: str,
 
         rows_html += (
             f'<tr style="{row_bg}">'
-            f'<td style="padding:8px 12px;">{_pos_pill_cell(pos, is_pitcher)}</td>'
+            f'<td style="padding:8px 12px;">{utils.pos_pill_html(pos, is_pitcher)}</td>'
             f'<td style="padding:8px 14px;color:#f1f5f9;font-weight:600;font-size:0.85rem;">'
             f'{name_esc}'
             f'<div style="font-size:0.62rem;color:#4b5563;margin-top:1px;">{pct_owned:.1f}% owned</div></td>'
             f'<td style="padding:8px 12px;color:#64748b;font-size:0.78rem;">{pro_team}</td>'
-            f'<td style="padding:8px 12px;">{_injury_html_cell(utils.injury_badge(p))}</td>'
+            f'<td style="padding:8px 12px;">{utils.injury_badge_html(utils.injury_badge(p))}</td>'
             f'<td style="padding:8px 12px;text-align:right;color:{own_color};font-weight:700;">{pct_owned:.1f}%</td>'
             f'{stat_cells}</tr>'
         )

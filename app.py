@@ -320,9 +320,16 @@ def _is_auth_error(e: Exception) -> bool:
     ))
 
 
-def show_cookie_expired_page():
+def show_cookie_expired_page(admin_email: str = ""):
     """Render a friendly cookie-expired error page and stop execution."""
-    st.markdown("""
+    mailto = f"mailto:{admin_email}?subject=Fantasy%20Baseball%20-%20Update%20Cookies" if admin_email else "#"
+    email_btn = (
+        f'<a href="{mailto}" style="display:inline-block;background:#dc2626;color:#ffffff;'
+        f'font-weight:700;font-size:0.9rem;padding:10px 24px;border-radius:8px;'
+        f'text-decoration:none;letter-spacing:0.04em;">Email Admin</a>'
+        if admin_email else ""
+    )
+    st.markdown(f"""
 <div style="
     background:#0a0e17;
     min-height:60vh;
@@ -346,20 +353,7 @@ def show_cookie_expired_page():
     <div style="font-size:0.95rem;color:#94a3b8;margin-bottom:28px;line-height:1.6;">
       The ESPN cookies powering this app have expired. Tap below to notify the admin.
     </div>
-    <a href="mailto:ajvillan22@yahoo.com?subject=Fantasy%20Baseball%20-%20Update%20Cookies"
-       style="
-           display:inline-block;
-           background:#dc2626;
-           color:#ffffff;
-           font-weight:700;
-           font-size:0.9rem;
-           padding:10px 24px;
-           border-radius:8px;
-           text-decoration:none;
-           letter-spacing:0.04em;
-       ">
-      Email Admin
-    </a>
+    {email_btn}
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -461,7 +455,7 @@ def main():
             )
         except Exception as e:
             if _is_auth_error(e):
-                show_cookie_expired_page()
+                show_cookie_expired_page(creds["admin_email"])
                 return
             st.error(f"Could not connect to ESPN for **{selected_name}**: {e}")
             st.info("This usually means your ESPN cookies have expired. Re-copy them from your browser and update `.env`.")
