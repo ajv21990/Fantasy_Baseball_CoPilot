@@ -5,15 +5,6 @@ from core.league_client import get_team_by_name
 from core import ratings_store
 
 
-# ── Stat extraction (same pattern as free_agents / my_team) ───────────────────
-
-def _get_bd(player) -> dict:
-    raw = getattr(player, "stats", {}) or {}
-    bd = raw.get(0, {})
-    if isinstance(bd, dict):
-        bd = bd.get("breakdown", {})
-    return bd if isinstance(bd, dict) else {}
-
 
 def _pid_map(league) -> dict:
     """playerId -> player object across every team's roster."""
@@ -35,17 +26,9 @@ def _stars_html(n: float, size: str = "1rem") -> str:
             f'font-weight:700;">{stars}</span>')
 
 
-def _pos_pill(pos: str, is_pitcher: bool) -> str:
-    if is_pitcher:
-        s = "background:rgba(249,115,22,0.15);color:#f97316;border:1px solid rgba(249,115,22,0.3);"
-    else:
-        s = "background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);"
-    return (f'<span style="border-radius:6px;padding:2px 7px;font-size:0.68rem;'
-            f'font-weight:700;{s}">{_html.escape(pos) if pos else "—"}</span>')
-
 
 def _stat_rows_html(player) -> str:
-    bd = _get_bd(player)
+    bd = utils.get_player_breakdown(player)
     pitcher = utils.is_pitcher(player)
     cats = utils.PITCHER_STATS if pitcher else utils.BATTER_STATS
     rows = ""
@@ -68,7 +51,7 @@ def _player_card(player, name: str, extra_html: str = "") -> str:
     pos = getattr(player, "position", "") or "" if player is not None else ""
     pro_team = _html.escape(getattr(player, "proTeam", "") or "") if player is not None else ""
     pitcher = utils.is_pitcher(player) if player is not None else False
-    pos_pill = _pos_pill(pos, pitcher)
+    pos_pill = utils.pos_pill_html(pos, pitcher)
     stats_html = _stat_rows_html(player) if player is not None else (
         '<div style="font-size:0.7rem;color:#ef4444;">no longer on a roster</div>')
     return (

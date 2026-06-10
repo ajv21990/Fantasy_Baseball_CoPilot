@@ -5,14 +5,6 @@ from datetime import datetime, timedelta
 from core import utils
 
 
-def _ordinal(n) -> str:
-    if n is None:
-        return "—"
-    n = int(n)
-    if 11 <= n % 100 <= 13:
-        return f"{n}th"
-    return f"{n}{('th','st','nd','rd','th')[min(n % 10, 4)]}"
-
 
 def _cat_result(cat: str, my_data: dict, opp_data: dict) -> str:
     """Return WIN/LOSS/TIE for a category.
@@ -100,8 +92,8 @@ def render(league, my_team_name: str = ""):
     except Exception:
         home_rank = away_rank = None
 
-    home_rank_str = f"{_ordinal(home_rank)} Place" if home_rank else "—"
-    away_rank_str = f"{_ordinal(away_rank)} Place" if away_rank else "—"
+    home_rank_str = f"{utils.ordinal(home_rank)} Place" if home_rank else "—"
+    away_rank_str = f"{utils.ordinal(away_rank)} Place" if away_rank else "—"
 
     current_period = getattr(league, "currentMatchupPeriod", "?")
 

@@ -118,6 +118,9 @@ def get_ratings() -> list[dict]:
 
 def set_rating(rater_team: str, player_id: int, stars: int) -> None:
     """Insert or update the single (rater_team, player_id) rating (1-5 stars)."""
+    stars = int(stars)
+    if not 1 <= stars <= 5:
+        raise ValueError(f"stars must be 1–5, got {stars}")
     sql = text(
         "INSERT INTO ratings (rater_team, player_id, stars, updated_at) "
         "VALUES (:rt, :pid, :s, :ts) "
@@ -125,7 +128,7 @@ def set_rating(rater_team: str, player_id: int, stars: int) -> None:
     )
     with _engine().begin() as c:
         c.execute(sql, {"rt": rater_team, "pid": int(player_id),
-                        "s": int(stars), "ts": _now()})
+                        "s": stars, "ts": _now()})
 
 
 def delete_rating(rater_team: str, player_id: int) -> None:

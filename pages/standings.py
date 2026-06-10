@@ -9,8 +9,6 @@ from core.stats import fetch_category_wins as _fetch_category_wins
 
 # ── Shared HTML builders ─────────────────────────────────────────────────────
 
-_TH = ('background:#0d1a2e;color:#7a8fa6;font-size:0.7rem;text-transform:uppercase;'
-       'letter-spacing:0.08em;padding:8px 12px;border-bottom:2px solid #1e2d40;font-weight:700;')
 _GROUP_TH = ('font-size:0.68rem;font-weight:800;letter-spacing:0.12em;padding:6px 12px;'
              'text-transform:uppercase;border-bottom:1px solid;text-align:center;')
 _BAT_HDR  = 'color:#f97316;border-color:#f97316;background:rgba(249,115,22,0.08);'
@@ -34,7 +32,7 @@ def _group_header_row(batting_cats, pitching_cats):
            if batting_cats else "")
     pit = (f'<th colspan="{len(pitching_cats)}" style="{_GROUP_TH}{_PIT_HDR}">Pitching</th>'
            if pitching_cats else "")
-    return f'<tr><th style="{_TH}"></th>{bat}{pit}</tr>'
+    return f'<tr><th style="{utils.TABLE_HEADER_STYLE}"></th>{bat}{pit}</tr>'
 
 
 def render(league, my_team_name: str = ""):
@@ -87,7 +85,7 @@ def render(league, my_team_name: str = ""):
     def _standings_html(df, my_team_name):
         headers = df.columns.tolist()
         hdr = "".join(
-            f'<th style="{_TH}">{h}</th>' for h in headers
+            f'<th style="{utils.TABLE_HEADER_STYLE}">{h}</th>' for h in headers
         )
         body = ""
         for _, row in df.iterrows():
@@ -160,10 +158,10 @@ def render(league, my_team_name: str = ""):
 
     def _cat_wins_html(team_order, cat_totals, batting_cats, pitching_cats, my_team_name):
         cat_hdr = "".join(
-            f'<th style="{_TH}text-align:center;">{c}</th>'
+            f'<th style="{utils.TABLE_HEADER_STYLE}text-align:center;">{c}</th>'
             for c in batting_cats + pitching_cats
         )
-        row2 = f'<tr><th style="{_TH}">Team</th>{cat_hdr}</tr>'
+        row2 = f'<tr><th style="{utils.TABLE_HEADER_STYLE}">Team</th>{cat_hdr}</tr>'
         body = ""
         for i, team_name in enumerate(team_order):
             is_mine = my_team_name and my_team_name.lower() in team_name.lower()
